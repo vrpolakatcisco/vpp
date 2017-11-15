@@ -20,7 +20,7 @@ Switch_And_Execute_With_Copied_File
     [Documentation]    Switch to \${ssh_session} and continue with Execute_Command_With_Copied_File.
     BuiltIn.Log_Many    ${ssh_session}    ${file_path}    ${command_prefix}    ${expected_rc}    ${ignore_stderr}
     SSHLibrary.Switch_Connection    ${ssh_session}
-    BuiltIn.Run_Keyword_And_Return    Execute_Command_With_Copied_File    ${command_prefix}    expected_rc=${expected_rc}    ignore_stderr=${ignore_stderr}
+    BuiltIn.Run_Keyword_And_Return    Execute_Command_With_Copied_File    ${file_path}    ${command_prefix}    expected_rc=${expected_rc}    ignore_stderr=${ignore_stderr}
 
 Execute_Command_With_Copied_File
     [Arguments]    ${file_path}    ${command_prefix}    ${expected_rc}=0    ${ignore_stderr}=${False}
