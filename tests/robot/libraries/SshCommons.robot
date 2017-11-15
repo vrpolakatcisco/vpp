@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation     This is a library for simple improvements over SSHLibrary for other robot libraries to use.
-Library    SSHLibrary
+Library           SSHLibrary
 
 *** Keywords ***
 Open_Ssh_Connection

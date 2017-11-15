@@ -1,9 +1,6 @@
 *** Settings ***
 Documentation     This is a library to handle kubectl commands on the remote machine, towards which
-...    ssh connection is opened.
-Library           Collections
-Library           SSHLibrary
-Library           String
+...               ssh connection is opened.
 Library           ${CURDIR}/kube_parser.py
 Resource          ${CURDIR}/SshCommons.robot
 

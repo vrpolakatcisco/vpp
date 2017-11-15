@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation     This is a library to handle kubeadm commands on the remote machine, towards which
-...    ssh connection is opened.
+...               ssh connection is opened.
 Resource          ${CURDIR}/SshCommons.robot
 
 *** Keywords ***

@@ -1,8 +1,9 @@
-[Documentation]     Keywords for testsuite setup and teardown.
-...                 TODO: Describe \${snapshot_num} (or remove it).
-
 *** Settings ***
-Resource      ${ENV}_setup-teardown.robot
+Documentation     Keywords for testsuite setup and teardown.
+...               TODO: Describe \${snapshot_num} (or remove it).
+Library           OperatingSystem
+Resource          ${CURDIR}/SshCommons.robot
+Resource          ${CURDIR}/${ENV}_setup-teardown.robot
 
 *** Variables ***
 ${snapshot_num}       0
