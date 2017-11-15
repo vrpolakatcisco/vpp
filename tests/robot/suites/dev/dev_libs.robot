@@ -2,8 +2,8 @@
 Resource          ${CURDIR}/../../libraries/setup-teardown.robot
 Resource          ${CURDIR}/../../libraries/SshCommons.robot
 Resource          ${CURDIR}/../../variables/${VARIABLES}_variables.robot
-Suite_Setup       setup-teardown.Testsuite_Setup
-Suite_Teardown    setup-teardown.Testsuite_Teardown
+Suite Setup       setup-teardown.Testsuite_Setup
+Suite Teardown    setup-teardown.Testsuite_Teardown
 
 *** Variables ***
 ${VARIABLES}      common

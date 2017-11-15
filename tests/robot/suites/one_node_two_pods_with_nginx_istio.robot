@@ -8,7 +8,7 @@ Suite Teardown    OneNodeK8sTeardown
 
 *** Variables ***
 ${VARIABLES}      common
-${ENV}           [Documentation]    Execute "ping -c 5" from client pod to nginx IP address, check zero packet loss.     common
+${ENV}            common
 
 *** Test Cases ***
 Pod_To_Nginx_Ping
