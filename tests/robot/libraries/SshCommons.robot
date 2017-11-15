@@ -1,5 +1,6 @@
 *** Settings ***
 Documentation     This is a library for simple improvements over SSHLibrary for other robot libraries to use.
+Library           String
 Library           SSHLibrary
 
 *** Keywords ***

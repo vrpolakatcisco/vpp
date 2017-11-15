@@ -15,6 +15,7 @@ Documentation     This is a library to handle actions related to kubernetes clus
 ...               ${nginx_pod_name} nginx pod name assigned by k8s in 1-node 2-pod scenario.
 ...               ${istio_pods} list of pods matching istio prefix last seen running.
 Library           Collections
+Library           String
 Resource          ${CURDIR}/KubeAdm.robot
 Resource          ${CURDIR}/KubeCtl.robot
 Resource          ${CURDIR}/SshCommons.robot
