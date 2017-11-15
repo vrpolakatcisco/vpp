@@ -2,7 +2,7 @@
 Documentation     This suite test getting the web page from nginx (without istio).
 Resource          ${CURDIR}/../libraries/KubernetesEnv.robot
 Resource          ${CURDIR}/../variables/${VARIABLES}_variables.robot
-Resource          ${CURDIR}/../libraries/setup-teardonwn.robot
+Resource          ${CURDIR}/../libraries/setup-teardown.robot
 Suite Setup       OneNodeK8sSetup
 Suite Teardown    OneNodeK8sTeardown
 
@@ -46,7 +46,7 @@ OneNodeK8sTeardown
     [Documentation]    Log leftover output from pods, remove pods, execute common teardown.
     KubernetesEnv.Log_Pods_For_Debug    ${testbed_connection}
     KubernetesEnv.Remove_Client_And_Nginx_Pod_And_Verify_Removed    ${testbed_connection}
-    Testsuite Teardown
+    setup-teardown.Testsuite_Teardown
 
 Setup_Client_Pod_Session
     [Arguments]    ${user}=localadmin    ${password}=cisco123

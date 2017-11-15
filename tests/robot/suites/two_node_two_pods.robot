@@ -127,7 +127,7 @@ TwoNodesK8sTeardown
     KubernetesEnv.Remove_Nginx_Pod_And_Verify_Removed    ${testbed_connection}    nginx_file=${NGINX_POD_FILE_NODE2}
     KubernetesEnv.Remove_Client_Pod_And_Verify_Removed    ${testbed_connection}    client_file=${CLIENT_POD_FILE_NODE1}
     KubernetesEnv.Remove_Server_Pod_And_Verify_Removed    ${testbed_connection}    server_file=${SERVER_POD_FILE_NODE2}
-    Testsuite Teardown
+    setup-teardown.Testsuite_Teardown
 
 Setup_Hosts_Connections
     [Arguments]    ${user}=localadmin    ${password}=cisco123
