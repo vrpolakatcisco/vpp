@@ -1,9 +1,10 @@
 *** Settings ***
 Documentation     This is a library to handle actions related to kubernetes cluster,
 ...    such as kubernetes setup or rester, applying network plugin etc.
-Library     Collections
-Resource    ${CURDIR}/KubeCtl.robot
-Resource    ${CURDIR}/KubeAdm.robot
+Library           Collections
+Resource          ${CURDIR}/KubeAdm.robot
+Resource          ${CURDIR}/KubeCtl.robot
+Resource          ${CURDIR}/setup-teardown.robot
 
 *** Variables ***
 ${NV_PLUGIN_URL}    https://raw.githubusercontent.com/contiv/vpp/master/k8s/contiv-vpp.yaml
