@@ -2,7 +2,6 @@
 Documentation     This suite test getting the web page from nginx
 Resource     ${CURDIR}/../libraries/KubernetesEnv.robot
 Resource     ${CURDIR}/../variables/${VARIABLES}_variables.robot
-Resource     ${CURDIR}/../libraries/all_libs.robot
 Suite Setup       OneNodeK8sSetup
 Suite Teardown     OneNodeK8sTeardown
 
