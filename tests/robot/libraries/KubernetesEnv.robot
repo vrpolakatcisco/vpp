@@ -128,7 +128,7 @@ Get_Pod_Name_List_By_Prefix
     [Documentation]    Get pods from all namespaces, parse with specified \${pod_prefix}, log and return the parsed result.
     BuiltIn.Log_Many    ${ssh_session}    ${pod_prefix}
     BuiltIn.Comment    TODO: Unify with Get_Pods or Get_Pods_All_Namespaces in KubeCtl.
-    ${stdout} =    KubeCtl__Execute_Command_And_Log    ${ssh_session}    kubectl get pods --all-namespaces
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${ssh_session}    kubectl get pods --all-namespaces
     ${output} =    kube_parser.parse_kubectl_get_pods_and_get_pod_name    ${stdout}    ${pod_prefix}
     Builtin.Log    ${output}
     [Return]    ${output}
