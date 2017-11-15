@@ -17,7 +17,7 @@ Documentation     This is a library to handle actions related to kubernetes clus
 Library           Collections
 Resource          ${CURDIR}/KubeAdm.robot
 Resource          ${CURDIR}/KubeCtl.robot
-Resource          ${CURDIR}/SshComons.robot
+Resource          ${CURDIR}/SshCommons.robot
 
 *** Variables ***
 ${NV_PLUGIN_URL}    https://raw.githubusercontent.com/contiv/vpp/master/k8s/contiv-vpp.yaml
