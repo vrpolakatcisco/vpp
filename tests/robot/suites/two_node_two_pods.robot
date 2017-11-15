@@ -47,9 +47,9 @@ Pod_To_Pod_Ping
 Host_To_Pod_Ping
     [Documentation]    Host to pod ping, client_ip is local, server_ip is remote
     [Setup]    Setup_Hosts_Connections
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    ping -c 5 ${server_ip}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${server_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    ping -c 5 ${client_ip}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${client_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
     [Teardown]    Teardown_Hosts_Connections
 
@@ -94,12 +94,12 @@ Pod_To_Nginx_Remote
 
 Host_To_Nginx_Local
     [Documentation]    Curl from linux host pod to another on the same node
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${VM_SSH_ALIAS_PREFIX}2    curl http://${nginx_ip} --noproxy ${nginx_ip}   ignore_stderr=${True}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${VM_SSH_ALIAS_PREFIX}2    curl http://${nginx_ip} --noproxy ${nginx_ip}   ignore_stderr=${True}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
 
 Host_To_Nginx_Remote
     [Documentation]    Curl from linux host to pod on another node
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${VM_SSH_ALIAS_PREFIX}1    curl http://${nginx_ip} --noproxy ${nginx_ip}    ignore_stderr=${True}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${VM_SSH_ALIAS_PREFIX}1    curl http://${nginx_ip} --noproxy ${nginx_ip}    ignore_stderr=${True}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
 
 *** Keywords ***

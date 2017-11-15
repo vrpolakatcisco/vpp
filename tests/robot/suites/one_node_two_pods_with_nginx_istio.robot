@@ -20,7 +20,7 @@ Pod_To_Nginx_Ping
 
 Host_To_Nginx_Ping
     [Documentation]    Execute "ping -c 5" from host to nginx IP address, check zero packet loss.
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    ping -c 5 ${nginx_ip}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${nginx_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
 
 Get_Web_Page_From_Pod
@@ -32,7 +32,7 @@ Get_Web_Page_From_Pod
 
 Get_Web_Page_From_Host
     [Documentation]    Execute curl from host to nginx IP address, check the expected response is seen.
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    curl -v http://${nginx_ip}    ignore_stderr=${True}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    curl -v http://${nginx_ip}    ignore_stderr=${True}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
 
 *** Keywords ***

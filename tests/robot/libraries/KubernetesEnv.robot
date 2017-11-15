@@ -93,7 +93,7 @@ Docker_Pull_Contiv_Vpp
 
 Docker_Pull_Custom_Kube_Proxy
     [Arguments]    ${ssh_session}
-    Execute_Command_And_Log_All    ${ssh_session}    bash <(curl -s https://raw.githubusercontent.com/contiv/vpp/master/k8s/proxy-install.sh)
+    SshCommons.Switch_And_Execute_Command    ${ssh_session}    bash <(curl -s https://raw.githubusercontent.com/contiv/vpp/master/k8s/proxy-install.sh)
 
 Apply_Contive_Vpp_Plugin
     [Arguments]    ${ssh_session}

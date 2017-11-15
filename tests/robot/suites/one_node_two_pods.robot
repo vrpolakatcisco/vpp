@@ -47,9 +47,9 @@ Pod_To_Pod_Tcp
 Host_To_Pod_Ping
     [Documentation]    Execute "ping -c 5" command from host to both pods, require no packet loss.
     [Setup]    Setup_Hosts_Connections
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    ping -c 5 ${server_ip}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${server_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
-    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    ping -c 5 ${client_ip}
+    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${client_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
     [Teardown]    Teardown_Hosts_Connections
 
