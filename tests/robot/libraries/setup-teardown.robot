@@ -55,7 +55,7 @@ Get_Machine_Status
     SshCommons.Execute_Command_And_Log    docker images
     SshCommons.Execute_Command_And_Log    docker ps -as
     BuiltIn.Return_From_Keyword_If    """${machine}""" != """${VM_SSH_ALIAS_PREFIX}1"""
-    SshCommons.Execute_Command_And_Log    kubectl get nodes    expected_rc=1    ignore_stderr=True
+    SshCommons.Execute_Command_And_Log    kubectl get nodes
     SshCommons.Execute_Command_And_Log    kubectl get pods    ignore_stderr=True
 
 Create_Connections_To_Kube_Cluster
