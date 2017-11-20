@@ -1,14 +1,9 @@
 *** Settings ***
 Documentation     Test suite to test basic ping, udp, tcp and dns functionality of the network plugin.
-Resource     ${CURDIR}/../libraries/KubernetesEnv.robot
-Resource     ${CURDIR}/../variables/${VARIABLES}_variables.robot
-Resource     ${CURDIR}/../libraries/all_libs.robot
+Resource          ${CURDIR}/../libraries/KubernetesEnv.robot
+Resource          ${CURDIR}/../libraries/all_libs.robot
 Suite Setup       TwoNodesK8sSetup
-Suite Teardown     TwoNodesK8sTeardown
-
-*** Variables ***
-${VARIABLES}          common
-${ENV}                common
+Suite Teardown    TwoNodesK8sTeardown
 
 *** Test Cases ***
 #Pod_To_Ten_Nginxs
@@ -19,7 +14,7 @@ ${ENV}                common
 #    [Teardown]    Teardown_Hosts_Connections
 
 Host_To_Ten_Nginxs
-    [Documentation]    Curl from linux host pod to another on the same node
+    [Documentation]    Curl from linux host pod to another on the same node.
     Log    ${nginx_list}
     : FOR    ${nginx_node}     IN     @{nginx_list}
     \    ${nginx_node_details} =    KubeCtl.Describe_Pod    ${testbed_connection}    ${nginx_node}

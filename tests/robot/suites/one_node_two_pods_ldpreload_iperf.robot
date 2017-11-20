@@ -1,30 +1,29 @@
 *** Settings ***
 Documentation    Test suite to test ldpreload functionality with iperf.
 Resource         ${CURDIR}/../libraries/KubernetesEnv.robot
-Resource         ${CURDIR}/../variables/${VARIABLES}_variables.robot
 Resource         ${CURDIR}/../libraries/setup-teardown.robot
 Suite Setup      OneNodeK8sSetup
 Suite Teardown   OneNodeK8sTeardown
 
 *** Variables ***
-${VARIABLES}     common
-${ENV}           common
 ${CLIENT_FILE}   ${CURDIR}/../resources/one-ldpreload-client-iperf.yaml
 ${SERVER_FILE}   ${CURDIR}/../resources/one-ldpreload-server-iperf.yaml
 
 *** Test Cases ***
-
 Host_To_Pod_Iperf
+    [Documentation]    Execute iperf3 comand from host towards server pod, checking return code is zero.
     [Setup]    Setup_Hosts_Connections
     ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    iperf3 -V4d -c ${server_ip}    ignore_stderr=${True}
     [Teardown]    Teardown_Hosts_Connections
 
 Pod_To_Pod_Iperf
+    [Documentation]    Execute iperf3 comand from client pod towards server pod, checking return code is zero.
     [Setup]    Setup_Hosts_Connections
     ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    kubectl exec ${client_pod_name} -- iperf3 -V4d -c ${server_ip}    ignore_stderr=${True}
     [Teardown]    Teardown_Hosts_Connections
 
 Pod_To_Pod_Iperf_Loop
+    [Documentation]    Execue 2 consecutive iperf3 comands from client pod towards server pod, checking return codes are zero.
     [Setup]    Setup_Hosts_Connections
     Repeat Keyword    2    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    kubectl exec ${client_pod_name} -- iperf3 -V4d -c ${server_ip}    ignore_stderr=${True}
     [Teardown]    Teardown_Hosts_Connections
