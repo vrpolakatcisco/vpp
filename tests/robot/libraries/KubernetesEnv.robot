@@ -268,13 +268,21 @@ Remove_Istio_And_Verify_Removed
     KubeCtl.Delete_F    ${ssh_session}    ${ISTIO_FILE}    expected_rc=${1}    ignore_stderr=${True}
     BuiltIn.Wait_Until_Keyword_Succeeds    60s    5s    Verify_Istio_Removed    ${ssh_session}
 
+Check_Number_Of_Applied_Pods
+    [Arguments]    ${ssh_session}    ${pod_prefix}    ${expected_numer}
+    [Documentation]    Call Get_Pod_Name_List_By_Prefix, check the result has expected length, return the result.
+    ...    This is a separate keyword just to have a single keyword to plug into WUKS.
+    BuiltIn.Log_Many    ${ssh_session}    ${pod_prefix}    ${expected_numer}
+    ${pod_name_list} =    Get_Pod_Name_List_By_Prefix    ${ssh_session}    ${pod_prefix}
+    BuiltIn.Length_Should_Be    ${pod_name_list}    ${expected_number}
+    [Return]    ${pod_name_list}
+
 Deploy_Pod_And_Verify_Running
     [Arguments]    ${ssh_session}    ${pod_file}    ${pod_prefix}
     [Documentation]    Deploy pod defined by \${pod_file}, wait until a pod matching \${pod_prefix} appears, check it was only 1 such pod, extract its name, wait until it is running, log and return the name.
     Builtin.Log_Many    ${ssh_session}    ${pod_file}    ${pod_prefix}
     KubeCtl.Apply_F    ${ssh_session}    ${pod_file}
-    ${pod_name_list} =    BuiltIn.Wait_Until_Keyword_Succeeds    10s    2s    Get_Pod_Name_List_By_Prefix    ${ssh_session}    ${pod_prefix}
-    BuiltIn.Length_Should_Be    ${pod_name_list}    1
+    ${pod_name_list} =    BuiltIn.Wait_Until_Keyword_Succeeds    10s    2s    Check_Number_Of_Applied_Pods    ${ssh_session}    ${pod_prefix}    1
     ${pod_name} =    BuiltIn.Evaluate     ${pod_name_list}[0]
     Wait_Until_Pod_Running    ${ssh_session}    ${pod_name}
     BuiltIn.Log    ${pod_name}
