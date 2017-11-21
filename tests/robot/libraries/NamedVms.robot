@@ -66,6 +66,19 @@ Get_Host_Role_For_Index
     BuiltIn.Log    ${role}
     [Return]    ${role}
 
+Switch_To_Node_For_Index
+    [Arguments]    ${index}=1
+    [Documentation]    Get alias for the index, switch there, return the alias.
+    ${alias} =    Get_Host_Alias_For_Index    ${index}
+    SSHLibrary.Switch_Connection    ${alias}
+
+Switch_To_Node_And_Execute_Command
+    [Arguments]    ${index}=1    ${command}    ${expected_rc}=0    ${ignore_stderr}=${False}    ${ignore_rc}=${False}
+    [Documentation]    Call Switch_To_Node_For_Index with ${index} and proceed with SshCommons.Execute_Command_And_Log
+    BuiltIn.Log_Many    ${index}=1    ${command}    ${expected_rc}=0    ${ignore_stderr}=${False}    ${ignore_rc}=${False}
+    Switch_To_Node_For_Index    ${index}
+    BuiltIn.Run_Keyword_And_Return    SshCommons.Execute_Command_And_Log    ${command}    ${expected_rc}    ${ignore_stderr}    ${ignore_rc}
+
 Create_Connections_To_Kube_Cluster
     [Documentation]    Create connection and log machine status for each node.
     ...    Leave active connection pointing to the first node (master).
@@ -101,9 +114,7 @@ For_Each_Machine_Switch_And_Call
     BuiltIn.Log_Many    ${max_index}    ${args}    ${kwargs}
     # TODO: Return list of returned values?
     : FOR    ${index}    IN RANGE    ${max_index}    0    -1
-    \    ${alias} =    Get_Host_Alias_For_Index    ${index}
-    \    SSHLibrary.Switch_Connection    ${alias}
-    \    # TODO: Swith_To_Alias?
+    \    Switch_To_Node_For_Index    ${index}
     \    BuiltIn.Run_Keyword    ${keyword}    @{args}    &{kwargs}
 
 For_Each_Machine_Switch_And_Call_With_Alias
@@ -112,8 +123,7 @@ For_Each_Machine_Switch_And_Call_With_Alias
     ...    call \${keyword} with the alias as its first positional argument.
     BuiltIn.Log_Many    ${keyword}    ${max_index}    ${args}    ${kwargs}
     : FOR    ${index}    IN RANGE    ${max_index}    0    -1
-    \    ${alias} =    Get_Host_Alias_For_Index    ${index}
-    \    SSHLibrary.Switch_Connection    ${alias}
+    \    ${alias} =    Switch_To_Node_For_Index    ${index}
     \    BuiltIn.Run_Keyword    ${keyword}    ${alias}    @{args}    &{kwargs}
 
 For_Each_Machine_Switch_And_Call_With_Index
@@ -122,8 +132,7 @@ For_Each_Machine_Switch_And_Call_With_Index
     ...    call \${keyword} with the index as its first positional argument.
     BuiltIn.Log_Many    ${keyword}    ${max_index}    ${args}    ${kwargs}
     : FOR    ${index}    IN RANGE    ${max_index}    0    -1
-    \    ${alias} =    Get_Host_Alias_For_Index    ${index}
-    \    SSHLibrary.Switch_Connection    ${alias}
+    \    Switch_To_Node_For_Index    ${index}
     \    BuiltIn.Run_Keyword    ${keyword}    ${index}    @{args}    &{kwargs}
 
 For_Each_Machine_Call_With_Index_Without_Switch

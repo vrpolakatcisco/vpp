@@ -24,8 +24,13 @@ ${snapshot_num}    0
 *** Keywords ***
 Testsuite_Setup
     [Documentation]    Perform actions common for setup of every suite.
+    ...    FIXME: Improve this Documentation.
     Discard_Old_Results
     NamedVms.Create_Connections_To_Kube_Cluster
+    ${master_ip} =    NamedVms.Get_Host_Ip_For_Index    1
+    BuiltIn.Set_Suite_Variable    \${master_ip}
+    ${master_alias} =    NamedVms.Get_Host_Alias_For_Index    1
+    BuiltIn.Set_Suite_Variable    \${master_alias}
 
 Testsuite_Teardown
     [Documentation]    Perform actions common for teardown of every suite.

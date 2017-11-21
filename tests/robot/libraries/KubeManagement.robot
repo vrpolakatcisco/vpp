@@ -115,15 +115,18 @@ Join_Other_Node
     SshCommons.Execute_Command_And_Log    sudo ${join_cmd}    ignore_stderr=${True}
 
 Reinit_Kube_Cluster
+    [Arguments]    ${nr_nodes}
     [Documentation]    Assuming SSH connections with known aliases are created, check roles,
     ...    reset nodes, init master, wait to see it running, join other nodes, wait until cluster is ready.
-    NamedVms.For_Each_Machine_Call_With_Index_Without_Switch    Check_K8s_Node_Settings
-    NamedVms.For_Each_Machine_Switch_And_Call    Reset_Cluster_Node
+    ...    The argument is there override the number of nodes, so 1-node suites work on 2-node deployments well.
+    Builtin.Log_Many    ${nr_nodes}
+    NamedVms.For_Each_Machine_Call_With_Index_Without_Switch    Check_K8s_Node_Settings    max_index=${nr_nodes}
+    NamedVms.For_Each_Machine_Switch_And_Call    Reset_Cluster_Node    max_index=${nr_nodes}
     # Master node SSH connection is active.
     ${init_stdout} =    Init_Master_Node
     BuiltIn.Wait_Until_Keyword_Succeeds    240s    10s    Check_K8s_With_Plugin_Running
     ${join_cmd} =    kube_parser.get_join_from_kubeadm_init    ${init_stdout}
-    NamedVms.For_Each_Machine_Switch_And_Call_With_Index    Join_Other_Node
+    NamedVms.For_Each_Machine_Switch_And_Call_With_Index    Join_Other_Node    max_index=${nr_nodes}
     # Master node SSH connection is active.
-    NodeManagement.Wait_Until_Cluster_Ready
-    NamedVms.For_Each_Machine_Call_With_Index_Without_Switch    Label_Node_For_Index
+    NodeManagement.Wait_Until_Cluster_Ready    max_index=${nr_nodes}
+    NamedVms.For_Each_Machine_Call_With_Index_Without_Switch    Label_Node_For_Index    nr_nodes=${nr_nodes}

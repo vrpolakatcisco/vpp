@@ -1,59 +1,39 @@
 *** Settings ***
 Documentation     Test suite to test basic ping, udp, tcp and dns functionality of the network plugin.
-Resource     ${CURDIR}/../libraries/KubernetesEnv.robot
-Resource     ${CURDIR}/../variables/${VARIABLES}_variables.robot
-Resource     ${CURDIR}/../libraries/all_libs.robot
-Suite Setup       TwoNodesK8sSetup
-Suite Teardown     TwoNodesK8sTeardown
-
-*** Variables ***
-${VARIABLES}          common
-${ENV}                common
+Resource          ${CURDIR}/../libraries/NamedVms.robot
+Resource          ${CURDIR}/../libraries/PodManagement.robot
+Resource          ${CURDIR}/../libraries/ShellOverSsh.robot
+Resource          ${CURDIR}/../libraries/SshCommons.robot
+Resource          ${CURDIR}/../libraries/StatefulSetup.robot
+Suite Setup       StatefulSetup.Setup_Suite_With_Named_Pod_Types_First_Multiple    1    10    nginx_10   client
+Suite Teardown    StatefulSetup.Teardown_Suite_With_Named_Pod_Types_Single    1    10    nginx_10    client
 
 *** Test Cases ***
-#Pod_To_Ten_Nginxs
-#    [Documentation]    Curl from one pod to another. Pods are on different nodes.
-#    [Setup]    Setup_Hosts_Connections
-#    ${stdout} =    KubernetesEnv.Run_Finite_Command_In_Pod    curl http://${nginx_ip}    ssh_session=${client_connection}
-#    BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
-#    [Teardown]    Teardown_Hosts_Connections
+Pod_To_Ten_Nginxes
+    [Documentation]    Curl from client pod to all nginx pods. Pods might be on different nodes.
+    : FOR    ${index}    IN RANGE    10
+    \    Client_Pod_To_One_Of_Nginxes    ${index}
 
-Host_To_Ten_Nginxs
-    [Documentation]    Curl from linux host pod to another on the same node
-    Log    ${nginx_list}
-    : FOR    ${nginx_node}     IN     @{nginx_list}
-    \    ${nginx_node_details} =    KubeCtl.Describe_Pod    ${testbed_connection}    ${nginx_node}
-    \    ${nginx_node_ip} =    BuiltIn.Evaluate    &{nginx_node_details}[${nginx_node}]["IP"]
-    \    ${stdout} =    KubernetesEnv.Execute_Command_And_Log_All    ${testbed_connection}    curl http://${nginx_node_ip} --noproxy ${nginx_node_ip}   ignore_stderr=${True}
-    \    BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
+Host_To_Ten_Nginxes
+    [Documentation]    Curl from master host to all nginx pods. Pods might be on different nodes.
+    : FOR    ${index}    IN RANGE    10
+    \    Host_To_One_Of_Nginxes    ${index}
 
 *** Keywords ***
-TwoNodesK8sSetup
-    Testsuite Setup
-    KubernetesEnv.Reinit_Multi_Node_Kube_Cluster
-    KubernetesEnv.Deploy_Client_Pod_And_Verify_Running    ${testbed_connection}    client_file=${CLIENT_POD_FILE}
-    KubernetesEnv.Deploy_Multireplica_Pods_And_Verify_Running    ${testbed_connection}    ${NGINX_10_POD_FILE}    nginx-    10
-    ${client_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${client_pod_name}
-    ${client_ip} =     BuiltIn.Evaluate    &{client_pod_details}[${client_pod_name}]["IP"]
-    BuiltIn.Set_Suite_Variable    ${client_ip}
-    ${nginx_list} =    KubernetesEnv.Get_Pod_Name_List_By_Prefix    ${testbed_connection}    nginx-
-    BuiltIn.Set_Suite_Variable    ${nginx_list}
+Client_Pod_To_One_Of_Nginxes
+    [Arguments]    ${index}
+    [Documentation]    Based on \${index} (from 0 to 9), issue curl from active connection (client pod)
+    ...    to nginx of that index.
+    BuiltIn.Log_Many    ${index}
+    ${nginx_ip} =    BuiltIn.Set_Variable    ${nginx_10_${index}_ip}
+    ${stdout} =    ShellOverSsh.Execute_Command_In_Active_Connection    curl http://${nginx_ip}
+    BuiltIn.Should_Contain    ${stdout}    If you see this page, the nginx web server is successfully installed
 
-TwoNodesK8sTeardown
-    KubernetesEnv.Log_Pods_For_Debug    ${testbed_connection}
-    KubernetesEnv.Remove_Client_Pod_And_Verify_Removed    ${testbed_connection}    client_file=${CLIENT_POD_FILE_NODE1}
-    KubernetesEnv.Remove_Multireplica_Pods_And_Verify_Removed    ${testbed_connection}    ${NGINX_10_POD_FILE}    nginx-
-    Testsuite Teardown
-
-Setup_Hosts_Connections
-    [Arguments]    ${user}=localadmin    ${password}=cisco123
-    ${conn} =     SSHLibrary.Get_Connection    ${testbed_connection}
-    ${client_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
-    SSHLibrary.Login    ${user}    ${password}
-    BuiltIn.Set_Suite_Variable    ${client_connection}
-    KubernetesEnv.Get_Into_Container_Prompt_In_Pod    ${client_connection}    ${client_pod_name}    prompt=#
-
-Teardown_Hosts_Connections
-    KubernetesEnv.Leave_Container_Prompt_In_Pod    ${client_connection}
-    SSHLibrary.Switch_Connection    ${client_connection}
-    SSHLibrary.Close_Connection
+Host_To_One_Of_Nginxes
+    [Arguments]    ${index}
+    [Documentation]    Based on \${index} (from 0 to 9), issue curl from host to nginx of that index.
+    ${nginx_ip} =    BuiltIn.Set_Variable    ${nginx_10_${index}_ip}
+    # TODO: Compute host IPs in StatefulSetup and store them in suite varibles.
+    ${host_ip} =    PodManagement.Get_Host_Ip_For_Pod_Name    ${nginx_10_${index}_pod_name}
+    ${stdout} =    SshCommons.Execute_Command_And_Log    curl http://${ip} --noproxy ${host_ip}   ignore_stderr=${True}
+    BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed

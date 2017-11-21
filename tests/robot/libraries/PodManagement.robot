@@ -36,6 +36,16 @@ Describe_Pod
     BuiltIn.Log    ${details}
     [Return]    ${details}
 
+Get_Host_Ip_For_Pod_Name
+    [Arguments]    ${name}
+    [Documentation]    Call Describe_Pod, parse IP address, log and return it.
+    ...    This is useful for determining --no-proxy target.
+    BuiltIn.Log_Many    ${name}
+    ${details} =    Describe_Pod    ${name}
+    ${ip} =    BuiltIn.Evaluate    &{details}[${name}]["IP"]
+    BuiltIn.Log    ${ip}
+    [Return]    ${ip}
+
 Get_Pods_Full
     [Arguments]    ${namespace}=${EMPTY}    ${options}=${EMPTY}
     [Documentation]    Execute "kubectl get pods" with optional arguments for given \${namespace} and \${options},
