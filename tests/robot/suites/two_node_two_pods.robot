@@ -1,18 +1,22 @@
 *** Settings ***
 Documentation     Test suite to test basic ping, udp, tcp and dns functionality of the network plugin in 2 host setup.
 Resource          ${CURDIR}/../libraries/all_libs.robot
-Suite Setup       TwoNodesK8sSetup
-Suite Teardown    TwoNodesK8sTeardown
+Suite Setup       StatefulSetup.Setup_Suite_With_Pod_Set    {"nodes":2,"pod_set":[{"template":"ubuntu","name":"client","replicas":1,"location":"client_node"},{"template":"ubuntu","name":"server","replicas":1,"location":"server_node"},{"template":"nginx","name":"nginx","replicas":1,"location":"server_node"}]}
+Suite Teardown    StatefulSetup.Teardown_Suite_With_Pod_Set
 
 *** Test Cases ***
 Pod_To_Pod_Ping
     [Documentation]    Pod to pod ping, pods are on different nodes.
-    [Setup]    Setup_Hosts_Connections
-    ${stdout} =    KubernetesEnv.Run_Finite_Command_In_Pod    ping -c 5 ${server_ip}    ssh_session=${client_connection}
+    [Setup]    StatefulSetup.Setup_Test_With_Named_Container_Types_Single    client    server
+    ${stdout} =    ShellOverSsh.Switch_And_Execute_Command    client    ping -c 5 ${server_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
-#    ${stdout} =    KubernetesEnv.Run_Finite_Command_In_Pod    ping -c 5 ${client_ip}    ssh_session=${server_connection}
+#    ${stdout} =    ShellOverSsh.Switch_And_Execute_Command    server    ping -c 5 ${client_ip}
 #    BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
-    [Teardown]    Teardown_Hosts_Connections
+    [Teardown]    Teardown_Test_With_Named_Container_Types
+
+######
+### Rewrite ended here so far.
+######
 
 #Pod_To_Pod_Udp
 #    [Documentation]    Pod to pod udp, pods are on different nodes.
@@ -95,54 +99,3 @@ Host_To_Nginx_Remote
     [Documentation]    Curl from linux host to pod on another node
     ${stdout} =    SshCommons.Switch_And_Execute_Command    ${VM_SSH_ALIAS_PREFIX}1    curl http://${nginx_ip} --noproxy ${nginx_ip}    ignore_stderr=${True}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
-
-*** Keywords ***
-TwoNodesK8sSetup
-    [Documentation]    Execute common setup, reinit 2node cluster, deploy client, server and nginx pods,
-    ...    parse and store their IP addresses.
-    setup-teardown.Testsuite_Setup
-    KubernetesEnv.Reinit_Multi_Node_Kube_Cluster
-    KubernetesEnv.Deploy_Client_Pod_And_Verify_Running    ${testbed_connection}    client_file=${CLIENT_POD_FILE_NODE1}
-    KubernetesEnv.Deploy_Server_Pod_And_Verify_Running    ${testbed_connection}    server_file=${SERVER_POD_FILE_NODE2}
-    KubernetesEnv.Deploy_Nginx_Pod_And_Verify_Running    ${testbed_connection}    nginx_file=${NGINX_POD_FILE_NODE2}
-    ${client_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${client_pod_name}
-    ${server_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${server_pod_name}
-    ${nginx_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${nginx_pod_name}
-    ${server_ip} =     BuiltIn.Evaluate    &{server_pod_details}[${server_pod_name}]["IP"]
-    ${client_ip} =     BuiltIn.Evaluate    &{client_pod_details}[${client_pod_name}]["IP"]
-    ${nginx_ip} =     BuiltIn.Evaluate    &{nginx_pod_details}[${nginx_pod_name}]["IP"]
-    BuiltIn.Set_Suite_Variable    ${server_ip}
-    BuiltIn.Set_Suite_Variable    ${client_ip}
-    BuiltIn.Set_Suite_Variable    ${nginx_ip}
-
-TwoNodesK8sTeardown
-    [Documentation]    Log leftover output from pods, remove pods, execute common teardown.
-    KubernetesEnv.Log_Pods_For_Debug    ${testbed_connection}    exp_nr_vswitch=2
-    KubernetesEnv.Remove_Nginx_Pod_And_Verify_Removed    ${testbed_connection}    nginx_file=${NGINX_POD_FILE_NODE2}
-    KubernetesEnv.Remove_Client_Pod_And_Verify_Removed    ${testbed_connection}    client_file=${CLIENT_POD_FILE_NODE1}
-    KubernetesEnv.Remove_Server_Pod_And_Verify_Removed    ${testbed_connection}    server_file=${SERVER_POD_FILE_NODE2}
-    setup-teardown.Testsuite_Teardown
-
-Setup_Hosts_Connections
-    [Arguments]    ${user}=localadmin    ${password}=cisco123
-    [Documentation]    Open and store two more SSH connections to master host, in one of them open
-    ...    pod shell to client pod.
-    Builtin.Log_Many    ${user}    ${password}
-    ${conn} =     SSHLibrary.Get_Connection    ${testbed_connection}
-    ${client_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
-    SSHLibrary.Login    ${user}    ${password}
-    BuiltIn.Set_Suite_Variable    ${client_connection}
-    ${server_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
-    SSHLibrary.Login    ${user}    ${password}
-    BuiltIn.Set_Suite_Variable    ${server_connection}
-    KubernetesEnv.Get_Into_Container_Prompt_In_Pod    ${client_connection}    ${client_pod_name}    prompt=#
-#    KubernetesEnv.Get_Into_Container_Prompt_In_Pod    ${server_connection}    ${server_pod_name}    prompt=#
-
-Teardown_Hosts_Connections
-    [Documentation]    Exit client pod shell, close both new SSH connections.
-    KubernetesEnv.Leave_Container_Prompt_In_Pod    ${client_connection}
-#    KubernetesEnv.Leave_Container_Prompt_In_Pod    ${server_connection}
-    SSHLibrary.Switch_Connection    ${client_connection}
-    SSHLibrary.Close_Connection
-    SSHLibrary.Switch_Connection    ${server_connection}
-    SSHLibrary.Close_Connection
