@@ -1,20 +1,18 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: ubuntu-client
+  name: $NAME
 spec:
-  replicas: 1
+  replicas: $REPLICAS
   template:
     metadata:
       labels:
         ldpreload: "true"
     spec:
-      nodeSelector:
-        location: client_node
       containers:
       - image: rastislavszabo/ubuntu
         imagePullPolicy: IfNotPresent
-        name: ubuntu-client
+        name: $NAME
         command: [ "/bin/bash", "-c", "--" ]
         args: [ "while true; do sleep 30; done;" ]
         securityContext:
@@ -23,6 +21,11 @@ spec:
           # ldpreload-related env vars
           - name: VCL_APP_SCOPE_GLOBAL
             value: ""
+          # ldpreload-related env vars
+          - name: VCL_APP_SCOPE_LOCAL
+            value: ""
           # enable verbose VCL debugs, do not use for production
           - name: VCL_DEBUG
             value: "3"
+      nodeSelector:
+        location: $LOCATION

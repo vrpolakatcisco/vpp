@@ -1,12 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: $NAME
+  labels:
+    app: $NAME
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: $NAME
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   annotations:
     sidecar.istio.io/status: injected-version-root@881c9704f303-0.2.9-48ce32e6909d120a8ecee58b6b7a84094da36b7c
   creationTimestamp: null
-  name: ubuntu-client
+  name: $NAME
 spec:
-  replicas: 1
+  replicas: $REPLICAS
   strategy: {}
   template:
     metadata:
@@ -14,18 +27,14 @@ spec:
         sidecar.istio.io/status: injected-version-root@881c9704f303-0.2.9-48ce32e6909d120a8ecee58b6b7a84094da36b7c
       creationTimestamp: null
       labels:
-        app: ubuntu-client
+        app: $NAME
     spec:
       containers:
-      - args:
-        - while true; do sleep 30; done;
-        command:
-        - /bin/bash
-        - -c
-        - --
-        image: rastislavszabo/ubuntu
+      - image: nginx
         imagePullPolicy: IfNotPresent
-        name: ubuntu-client
+        name: $NAME
+        ports:
+        - containerPort: 80
         resources: {}
       - args:
         - proxy
@@ -37,7 +46,7 @@ spec:
         - --binaryPath
         - /usr/local/bin/envoy
         - --serviceCluster
-        - ubuntu-client
+        - $NAME
         - --drainDuration
         - 45s
         - --parentShutdownDuration
