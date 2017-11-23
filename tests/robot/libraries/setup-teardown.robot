@@ -67,6 +67,8 @@ Get_Machine_Status
     SshCommons.Execute_Command_And_Log    docker images
     SshCommons.Execute_Command_And_Log    docker ps -as
     BuiltIn.Return_From_Keyword_If    """${machine}""" != """${VM_SSH_ALIAS_PREFIX}1"""
+    # The kubectl commands can fail if there was no prvious reinit. That is why we ignore errors.
+    # TODO: Log warn on fail?
     SshCommons.Execute_Command_And_Log    kubectl get nodes    ignore_stderr=True    ignore_rc=True
     SshCommons.Execute_Command_And_Log    kubectl get pods    ignore_stderr=True    ignore_rc=True
 
