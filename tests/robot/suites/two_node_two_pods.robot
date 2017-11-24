@@ -132,6 +132,7 @@ Setup_Hosts_Connections
     ${client_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
     SSHLibrary.Login    ${user}    ${password}
     BuiltIn.Set_Suite_Variable    ${client_connection}
+    ${conn} =     SSHLibrary.Get_Connection    ${VM_SSH_ALIAS_PREFIX}2
     ${server_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
     SSHLibrary.Login    ${user}    ${password}
     BuiltIn.Set_Suite_Variable    ${server_connection}
