@@ -1,67 +1,30 @@
 *** Settings ***
 Documentation     This suite test getting the web page from nginx (with istio).
 Resource          ${CURDIR}/../libraries/all_libs.robot
-Suite Setup       OneNodeK8sSetup
-Suite Teardown    OneNodeK8sTeardown
+Suite Setup       StatefulSetup.Setup_Suite_With_Named_Pod_Types_Single    1    istio   client
+Suite Teardown    StatefulSetup.Teardown_Suite_With_Named_Pod_Types_Single    1    istio    client
 
 *** Test Cases ***
 Pod_To_Nginx_Ping
     [Documentation]    Execute "ping -c 5" from client pod to nginx IP address, check zero packet loss.
-    [Setup]    Setup_Client_Pod_Session
-    ${stdout} =    KubernetesEnv.Run_Finite_Command_In_Pod    ping -c 5 ${nginx_ip}    ssh_session=${client_connection}
+    [Setup]    StatefulSetup.Setup_Test_With_Named_Container_Types_Single    client
+    ${stdout} =    ShellOverSsh.Switch_And_Execute_Command    client    ping -c 5 ${nginx_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
-    [Teardown]     Teardown_Client_Pod_Session
+    [Teardown]    StatefulSetup.Teardown_Test_With_Named_Container_Types    client
 
 Host_To_Nginx_Ping
     [Documentation]    Execute "ping -c 5" from host to nginx IP address, check zero packet loss.
-    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    ping -c 5 ${nginx_ip}
+    ${stdout} =    SshCommons.Execute_Command_And_Log    ping -c 5 ${nginx_ip}
     BuiltIn.Should_Contain   ${stdout}    5 received, 0% packet loss
 
 Get_Web_Page_From_Pod
     [Documentation]    Execute curl from client pod to nginx IP address, check the expected response is seen.
-    [Setup]    Setup_Client_Pod_Session
-    ${stdout} =    KubernetesEnv.Run_Finite_Command_In_Pod    curl http://${nginx_ip}    ssh_session=${client_connection}
+    [Setup]    StatefulSetup.Setup_Test_With_Named_Container_Types_Single    client
+    ${stdout} =    ShellOverSsh.Switch_And_Execute_Command    client    curl http://${nginx_ip}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
-    [Teardown]    Teardown_Client_Pod_Session
+    [Teardown]    StatefulSetup.Teardown_Test_With_Named_Container_Types    client
 
 Get_Web_Page_From_Host
     [Documentation]    Execute curl from host to nginx IP address, check the expected response is seen.
-    ${stdout} =    SshCommons.Switch_And_Execute_Command    ${testbed_connection}    curl -v http://${nginx_ip}    ignore_stderr=${True}
+    ${stdout} =    SshCommons.Execute_Command_And_Log    curl http://${nginx_ip} --noproxy ${nginx_ip}    ignore_stderr=${True}
     BuiltIn.Should_Contain   ${stdout}    If you see this page, the nginx web server is successfully installed
-
-*** Keywords ***
-OneNodeK8sSetup
-    [Documentation]    Execute common setup, reinit 1node cluster, deploy istio, deploy client and nginx pods.
-    setup-teardown.Testsuite_Setup
-    KubernetesEnv.Reinit_One_Node_Kube_Cluster
-    KubernetesEnv.Deploy_Istio_And_Verify_Running    ${testbed_connection}
-    KubernetesEnv.Deploy_Client_And_Nginx_Pod_And_Verify_Running    ${testbed_connection}    client_file=${CLIENT_ISTIO_POD_FILE}    nginx_file=${NGINX_ISTIO_POD_FILE}
-
-OneNodeK8sTeardown
-    [Documentation]    Log leftover output from pods, remove pods and istio, execute common teardown.
-    KubernetesEnv.Log_Pods_For_Debug    ${testbed_connection}    exp_nr_vswitch=1
-    KubernetesEnv.Remove_Client_And_Nginx_Pod_And_Verify_Removed    ${testbed_connection}    client_file=${CLIENT_ISTIO_POD_FILE}    nginx_file=${NGINX_ISTIO_POD_FILE}
-    KubernetesEnv.Remove_Istio_And_Verify_Removed    ${testbed_connection}
-    setup-teardown.Testsuite_Teardown
-
-Setup_Client_Pod_Session
-    [Arguments]    ${user}=localadmin    ${password}=cisco123
-    [Documentation]    Open and store one more SSH connection to master host, in it open
-    ...    pod shell to client pod, parse IP addresses for client and nginx and store them.
-    Builtin.Log_Many    ${user}    ${password}
-    Builtin.Comment    FIXME: De-duplicate into a Resource.
-    ${conn} =     SSHLibrary.Get_Connection    ${testbed_connection}
-    ${client_connection} =    SSHLibrary.Open_Connection    ${conn.host}    timeout=10
-    SSHLibrary.Login    ${user}    ${password}
-    BuiltIn.Set_Suite_Variable    ${client_connection}
-    KubernetesEnv.Get_Into_Container_Prompt_In_Pod    ${client_connection}    ${client_pod_name}    prompt=#
-    ${client_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${client_pod_name}
-    ${nginx_pod_details} =     KubeCtl.Describe_Pod    ${testbed_connection}    ${nginx_pod_name}
-    ${nginx_ip} =     BuiltIn.Evaluate    &{nginx_pod_details}[${nginx_pod_name}]["IP"]
-    BuiltIn.Set_Suite_Variable    ${nginx_ip}
-
-Teardown_Client_Pod_Session
-    [Documentation]    Exit client pod shell, close corresponding SSH connection.
-    KubernetesEnv.Leave_Container_Prompt_In_Pod    ${client_connection}
-    SSHLibrary.Switch_Connection    ${client_connection}
-    SSHLibrary.Close_Connection

@@ -1,0 +1,23 @@
+{
+    "nodes": 2,
+    "pod_set": [
+        {
+            "template": "ubuntu",
+            "name": "client",
+            "replicas": 1,
+            "location":"host_1"
+        },
+        {
+            "template": "ubuntu",
+            "name": "server",
+            "replicas": 1,
+            "location": "host_2"
+        },
+        {
+            "template": "nginx",
+            "name":"nginx",
+            "replicas": 1,
+            "location": "host_2"
+        }
+    ]
+}

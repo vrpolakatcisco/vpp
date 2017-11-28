@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: $NAME
+spec:
+  replicas: $REPLICAS
+  template:
+    metadata:
+      labels:
+        app: $NAME
+    spec:
+      containers:
+      - image: rastislavszabo/ubuntu
+        imagePullPolicy: IfNotPresent
+        name: $NAME
+        # Just spin & wait forever
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+      nodeSelector:
+        location: $LOCATION
