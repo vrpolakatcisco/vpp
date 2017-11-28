@@ -34,12 +34,11 @@ Execute_Command_With_Copied_File
 
 Switch_Execute_And_Log_To_File
     [Arguments]    ${ssh_session}    ${command}    ${expected_rc}=0    ${ignore_stderr}=${False}    ${ignore_rc}=${False}    ${log_stdout}=${False}
-    [Documentation]    Call Switch_And_Execute_Command (by default without logging stdout), put stdout into a file. Return stdout.
+    [Documentation]    Call Switch_And_Execute_Command redirecting stdout to a remote file, download the file.
     ...    To distinguish separate invocations, suite name, test name, session alias
     ...    and full command are used to construct file name.
     BuiltIn.Log_Many    ${ssh_session}    ${command}    ${expected_rc}    ${ignore_stderr}    ${ignore_rc}    ${log_stdout}
-    ${stdout} =    Switch_And_Execute_Command    ${ssh_session}    ${command}    expected_rc=${expected_rc}    ignore_stderr=${ignore_stderr}    ignore_rc=${ignore_rc}    log_stdout=${log_stdout}
-    # TODO: Create a separate library for putting data into automatically named files?
+    # FIXME: log_stdout is not useful here.
     ${underlined_command} =    String.Replace_String    ${command}    ${SPACE}    _
     # We rely on the requested session being active now.
     ${connection} =    SSHLibrary.Get_Connection
@@ -47,8 +46,9 @@ Switch_Execute_And_Log_To_File
     ${testname} =    BuiltIn.Get_Variable_Value    ${TEST_NAME}    ${EMPTY}
     ${filename} =    BuiltIn.Set_Variable    ${testname}__${SUITE_NAME}__${connection.alias}__${underlined_command}.log
     BuiltIn.Log    ${filename}
-    OperatingSystem.Create_File    ${RESULTS_FOLDER}${/}${filename}    ${stdout}
-    [Return]    ${stdout}
+    Switch_And_Execute_Command    ${ssh_session}    ${command} > ${filename}    expected_rc=${expected_rc}    ignore_stderr=${ignore_stderr}    ignore_rc=${ignore_rc}    log_stdout=${log_stdout}
+    SSHLibrary.Get_File    ${filename}    ${RESULTS_FOLDER}
+    [Teardown]    Execute_Command_And_Log    rm ${filename}
 
 Switch_And_Execute_Command
     [Arguments]    ${ssh_session}    ${command}    ${expected_rc}=0    ${ignore_stderr}=${False}    ${ignore_rc}=${False}    ${log_stdout}=${True}
