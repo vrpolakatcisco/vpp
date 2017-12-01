@@ -17,10 +17,10 @@ Documentation     This is a library to handle actions related to kubernetes clus
 Resource          ${CURDIR}/all_libs.robot
 
 *** Variables ***
-# TODO: Do not download from URLs. Git has already cloned the files, just reach outside tests/robot folder.
-${NV_PLUGIN_URL}    https://raw.githubusercontent.com/contiv/vpp/${BRANCH}/k8s/contiv-vpp.yaml
-${CRI_INSTALL_URL}    https://raw.githubusercontent.com/contiv/vpp/${BRANCH}/k8s/cri-install.sh
-${PULL_IMAGES_URL}    https://raw.githubusercontent.com/contiv/vpp/${BRANCH}/k8s/pull-images.sh
+${NV_PLUGIN_PATH}    ${CURDIR}/../../../k8s/contiv-vpp.yaml
+${CRI_INSTALL_PATH}    ${CURDIR}/../../../k8s/cri-install.sh
+${PULL_IMAGES_PATH}    ${CURDIR}/../../../k8s/pull-images.sh
+${PROXY_INSTALL_PATH}    ${CURDIR}/../../../k8s/proxy-install.sh
 ${CLIENT_POD_FILE}    ${CURDIR}/../resources/ubuntu-client.yaml
 ${SERVER_POD_FILE}    ${CURDIR}/../resources/ubuntu-server.yaml
 ${NGINX_POD_FILE}    ${CURDIR}/../resources/nginx.yaml
@@ -45,7 +45,7 @@ Reinit_One_Node_Kube_Cluster
     KubeAdm.Reset    ${testbed_connection}
     Uninstall_Cri
     Docker_Pull_Contiv_Vpp    ${testbed_connection}    ${normal_tag}    ${vpp_tag}
-    Docker_Pull_Custom_Kube_Proxy    ${testbed_connection}
+    Docker_Pull_Custom_Kube_Proxy
     Install_Cri    ${normal_tag}
     ${stdout} =    KubeAdm.Init    ${testbed_connection}
     BuiltIn.Should_Contain    ${stdout}    Your Kubernetes master has initialized successfully
@@ -73,7 +73,7 @@ Reinit_Multinode_Kube_Cluster
     \    SshCommons.Switch_And_Execute_Command    ${connection}    sudo modprobe uio_pci_generic
     \    Uninstall_Cri
     \    Docker_Pull_Contiv_Vpp    ${connection}    ${normal_tag}    ${vpp_tag}
-    \    Docker_Pull_Custom_Kube_Proxy    ${connection}
+    \    Docker_Pull_Custom_Kube_Proxy
     \    Install_Cri    ${normal_tag}
     # init master
     ${init_stdout} =    KubeAdm.Init    ${testbed_connection}
@@ -106,46 +106,54 @@ Get_Docker_Tags
     Builtin.Log    ${vpp_tag}
     [Return]    ${normal_tag}    ${vpp_tag}
 
-Uninstall_Cri
-    [Documentation]    Download and execute script with uninstall flag on active connection.
-    SshCommons.Execute_Command_And_Log    curl -s ${CRI_INSTALL_URL} | sudo bash /dev/stdin -u    ignore_stderr=${True}    ignore_rc=${True}
+Prepare_Cri_Script
+    [Arguments]    ${normal-tag}
+    [Documentation]    Copy cri-install.sh to result folder and perform docker image tag edit.
+    ...    Return path to the edited script.
+    Builtin.Log_Many    ${normal_tag}
+    ${file_path} =    BuiltIn.Set_Variable    ${RESULTS_FOLDER}/cri-install.sh
+    # TODO: Add error checking for OperatingSystem calls.
+    OperatingSystem.Run    cp -f ${CRI_INSTALL_PATH} ${file_path}
+    OperatingSystem.Run    sed -i 's@contivvpp/cri@contivvpp/cri:${normal_tag}@g' ${file_path}
+    [Return]    ${file_path}
+
+Uninstall_Cri    ${normal_tag}
+    [Documentation]    Prepare and execute script with uninstall flag on active connection.
+    ${file_path} =    Prepare_Cri_Script    ${normal_tag}
+    # A hack to move -u flag after the uploaded file name.
+    SshCommons.Execute_Command_And_Log    bash -c 'cat $0 | sudo bash /dev/stdin -u'    ignore_stderr=${True}    ignore_rc=${True}
 
 Install_Cri
     [Arguments]    ${normal_tag}
-    [Documentation]    Download, edit and execute script on active connection.
+    [Documentation]    Prepare and execute script on active connection.
     BuiltIn.Log_Many    ${normal_tag}
-    ${file_path} =    BuiltIn.Set_Variable    ${RESULTS_FOLDER}/cri-install.sh
-    # TODO: Add error checking for OperatingSystem calls.
-    OperatingSystem.Run    curl -s ${CRI_INSTALL_URL} > ${file_path}
-    OperatingSystem.Run    sed -i 's@contivvpp/cri@contivvpp/cri:${normal_tag}@g' ${file_path}
+    ${file_path} =    Prepare_Cri_Script    ${normal_tag}
     SshCommons.Execute_Command_With_Copied_File    ${file_path}    sudo bash    ignore_stderr=${True}
 
 Docker_Pull_Contiv_Vpp
     [Arguments]    ${ssh_session}    ${normal_tag}    ${vpp_tag}
-    [Documentation]    Execute bash applying pull-images.sh from github.
+    [Documentation]    Execute bash after applying edits to pull-images.sh.
     BuiltIn.Log_Many    ${ssh_session}    ${normal_tag}    ${vpp_tag}
     SSHLibrary.Switch_Connection    ${ssh_session}
     ${file_path} =    BuiltIn.Set_Variable    ${RESULTS_FOLDER}/pull-images.sh
     # TODO: Add error checking for OperatingSystem calls.
-    OperatingSystem.Run    curl -s ${PULL_IMAGES_URL} > ${file_path}
+    OperatingSystem.Run    cp -f ${PULL_IMAGES_PATH} ${file_path}
     OperatingSystem.Run    sed -i 's@vswitch:latest@vswitch:${vpp_tag}@g' ${file_path}
     OperatingSystem.Run    sed -i 's@:latest@:${normal_tag}@g' ${file_path}
     SshCommons.Execute_Command_With_Copied_File    ${file_path}    bash
 
 Docker_Pull_Custom_Kube_Proxy
-    [Arguments]    ${ssh_session}
     [Documentation]    Execute proxy-install.sh script.
-    Builtin.Log_Many    ${ssh_session}
-    SshCommons.Switch_And_Execute_Command    ${ssh_session}    bash <(curl -s https://raw.githubusercontent.com/contiv/vpp/${BRANCH}/k8s/proxy-install.sh)
+    SshCommons.Execute_Command_With_Copied_File    bash    ${PROXY_INSTALL_PATH}
 
 Apply_Contiv_Vpp_Plugin
     [Arguments]    ${ssh_session}    ${normal_tag}    ${vpp_tag}
-    [Documentation]    Apply file from URL ${NV_PLUGIN_URL} after editing in specific docker tags.
+    [Documentation]    Apply contiv yaml after editing in specific docker tags.
     BuiltIn.Log_Many    ${ssh_session}    ${normal_tag}    ${vpp_tag}
     SSHLibrary.Switch_Connection    ${ssh_session}
     ${file_path} =    BuiltIn.Set_Variable    ${RESULTS_FOLDER}/contiv-vpp.yaml
     # TODO: Add error checking for OperatingSystem calls.
-    OperatingSystem.Run    curl -s ${NV_PLUGIN_URL} > ${file_path}
+    OperatingSystem.Run    cp -f ${NV_PLUGIN_PATH} ${file_path}
     OperatingSystem.Run    sed -i 's@image: contivvpp/cni@image: contivvpp/cni:${normal_tag}@g' ${file_path}
     OperatingSystem.Run    sed -i 's@image: contivvpp/ksr@image: contivvpp/ksr:${normal_tag}@g' ${file_path}
     OperatingSystem.Run    sed -i 's@image: contivvpp/vswitch@image: contivvpp/vswitch:${vpp_tag}@g' ${file_path}
